@@ -6,7 +6,7 @@ This benchmark was tested on the following operating systems:
 
 ## Benchmark Execution
 
-To execute the benchmark, run the following commands:
+Run the following commands to execute the benchmark:
 
     git clone https://github.com/voges/mpegg-performance-benchmark.git
     cd mpegg-performance-benchmark
