@@ -4,12 +4,6 @@ set -e
 set -o pipefail
 set -x
 
-# DeeZ
-sudo apt-get install \
-    libbz2-dev \
-    libcurl4-openssl-dev \
-    libssl-dev
-
 # Samtools
 sudo apt-get install \
     autoconf \
