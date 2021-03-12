@@ -10,9 +10,9 @@ Run the following commands to execute the benchmark:
 
     git clone https://github.com/voges/mpegg-performance-benchmark.git
     cd mpegg-performance-benchmark
-    ./install_dependencies.sh
-    ./install_tools.sh
-    ./run_simulations.sh 1 # argument is the number of threads
+    bash install_dependencies.sh
+    bash install_tools.sh
+    bash run_simulations.sh 1 # argument is the number of threads
 
 A list of result files will be stored in ``result_files.txt``.
 
