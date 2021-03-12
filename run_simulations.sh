@@ -58,11 +58,11 @@ function do_roundtrip () {
     decompress_cmd_=${5}
     input_=${6}
 
-    printf "%-10s %-15s @ %d thread(s)    %s\n" "${name_}" "compress" "${num_threads_}" "${input_}"
+    printf "%s %-10s %-15s @ %d thread(s)    %s\n" "---" "${name_}" "compress" "${num_threads_}" "${input_}"
     timed_compress_cmd_="${time} --verbose --output ${input_}.${id_}.time_compress.txt ${compress_cmd_}"
     eval "${timed_compress_cmd_}" || ( echo "--- ${name_} compression error (proceeding)" && true )
 
-    printf "%-10s %-15s @ %d thread(s)    %s\n" "${name_}" "decompress" "${num_threads_}" "${input_}"
+    printf "%s %-10s %-15s @ %d thread(s)    %s\n" "---" "${name_}" "decompress" "${num_threads_}" "${input_}"
     timed_decompress_cmd_="${time} --verbose --output ${input_}.${id_}.time_decompress.txt ${decompress_cmd_}"
     eval "${timed_decompress_cmd_}" || ( echo "--- ${name_} decompression error (proceeding)" && true )
 
