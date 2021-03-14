@@ -4,21 +4,44 @@ This benchmark was tested on the following operating systems:
 
 - Ubuntu 20.04.2 LTS
 
-## Benchmark Execution
+## Installation
 
-Run the following commands to execute the benchmark:
+Clone the repository and ``cd`` into it:
 
     git clone https://github.com/voges/mpegg-performance-benchmark.git
     cd mpegg-performance-benchmark
+
+Install required system libraries:
+
     bash install_dependencies.sh
+
+Install compression tools:
+
     bash install_tools.sh
-    bash run_simulations.sh 1 # argument is the number of threads
 
-A list of result files will be stored in ``result_files.txt``.
+## Test
 
-Out of the box the simulations are performed with the files from the ``test`` folder.
-To perform the 'real' benchmark, check whether the paths in the files ``fastq_files.txt``, ``sam_files.txt``, and ``ref_files.txt`` point to the correct local locations.
-Then, comment lines 33-35 and uncomment lines 36-38 in ``run_simulations.sh``.
+Perform a test run:
+
+    bash run_simulations.sh --test_run
+
+Upon completion the newly created directory ``tmp`` will contain all results.
+
+With the ``--test_run`` option the simulations are performed with the files from the ``test`` folder.
+
+## Benchmark Execution
+
+To perform the 'real' benchmark, set the path to the local copy of the MPEG-G Genomic Information Database:
+
+    bash set_mpegg_gidb_prefix.sh /path/to/local/copy/of/the/mpegg/gidb
+
+Then, check whether the paths in the file ``ref_files.txt`` point to the correct local locations.
+
+Finally, run the benchmark:
+
+    bash run_simulations.sh
+
+Run ``bash run_simulations.sh --help`` for more options.
 
 ## Contact
 
