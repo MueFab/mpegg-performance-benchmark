@@ -15,7 +15,7 @@ readonly git_root_dir="$(git rev-parse --show-toplevel)"
 # Usage -----------------------------------------------------------------------
 
 num_threads="1"
-dry_run=false
+test_run=false
 work_dir="${git_root_dir}/tmp"
 
 print_usage () {
@@ -24,7 +24,7 @@ print_usage () {
     echo "options:"
     echo "  -h, --help                     print this help"
     echo "  -@, --num_threads NUM_THREADS  number of threads (does not apply to gzip and Quip) (default: ${num_threads})"
-    echo "  -n, --dry_run                  perform test run"
+    echo "  -n, --test_run                 perform test run"
     echo "  -w, --work_dir WORK_DIR        work directory (default: ${work_dir})"
 }
 
@@ -32,7 +32,7 @@ while [[ "${#}" -gt 0 ]]; do
     case ${1} in
         -h|--help) print_usage; exit 1;;
         -@|--num_threads) num_threads="${2}"; shift;;
-        -n|--dry_run) dry_run=true;;
+        -n|--test_run) test_run=true;;
         -w|--work_dir) work_dir="${2}"; shift;;
         *) echo "[${self_name}] error: unknown parameter passed: ${1}"; print_usage; exit 1;;
     esac
@@ -40,7 +40,7 @@ while [[ "${#}" -gt 0 ]]; do
 done
 
 echo "[${self_name}] number of threads: ${num_threads}"
-echo "[${self_name}] dry run: ${dry_run}"
+echo "[${self_name}] test run: ${test_run}"
 echo "[${self_name}] work directory: ${work_dir}"
 
 
@@ -61,7 +61,7 @@ readonly tools_dir="${git_root_dir}/tools"
 # Input files
 #   --> The input file paths must be absolute paths, or relative to the
 #       location of this script.
-if [[ "${dry_run}" == true ]]; then
+if [[ "${test_run}" == true ]]; then
     readarray -t fastq_gz_files < "${git_root_dir}/test/fastq_gz_files.txt"
     readarray -t bam_files < "${git_root_dir}/test/bam_files.txt"
     readarray -t ref_files < "${git_root_dir}/test/ref_files.txt"
