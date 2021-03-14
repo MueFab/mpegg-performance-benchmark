@@ -29,7 +29,7 @@ Upon completion the newly created directory ``tmp`` will contain all results.
 
 With the ``--test_run`` option the simulations are performed with the files from the ``test`` folder.
 
-## Benchmark Execution
+## Execution
 
 To perform the 'real' benchmark, set the path to the local copy of the MPEG-G Genomic Information Database:
 
