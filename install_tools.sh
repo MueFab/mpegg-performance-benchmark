@@ -4,6 +4,9 @@ set -e
 set -o pipefail
 set -u
 
+readonly self="${0}"
+readonly self_name="${self##*/}"
+
 readonly git_root_dir="$(git rev-parse --show-toplevel)"
 readonly tools_dir="${git_root_dir}/tools"
 mkdir "${tools_dir}"
@@ -55,11 +58,8 @@ cd ..
 quip="$(pwd)/quip-1.1.8/install/bin/quip"
 quip_version="$(${quip} --version | cut --delimiter=' ' --fields=2)"
 
-echo ""
-echo "--- Installation finished:"
-echo "--- DeeZ ${deez_version}: ${deez}"
-echo "--- DSRC ${dsrc_version}: ${dsrc}"
-echo "--- gzip ${gzip_version}: ${gzip}"
-echo "--- Samtools ${samtools_version}: ${samtools}"
-echo "--- Quip ${quip_version}: ${quip}"
-echo ""
+echo "[${self_name}] DeeZ ${deez_version}: ${deez}"
+echo "[${self_name}] DSRC ${dsrc_version}: ${dsrc}"
+echo "[${self_name}] gzip ${gzip_version}: ${gzip}"
+echo "[${self_name}] Samtools ${samtools_version}: ${samtools}"
+echo "[${self_name}] Quip ${quip_version}: ${quip}"
