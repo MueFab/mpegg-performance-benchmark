@@ -9,7 +9,7 @@ readonly self_name="${self##*/}"
 
 # Usage
 if [[ ${#} -ne 1 ]]; then echo "usage: ${0} <prefix>"; exit 1; fi
-readonly prefix="${1}"
+prefix="${1}"
 if [[ ${prefix} != */ ]]; then prefix="${prefix}/"; fi # append '/' if needed
 readonly git_root_dir="$(git rev-parse --show-toplevel)"
 
