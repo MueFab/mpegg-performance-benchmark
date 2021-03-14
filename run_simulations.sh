@@ -14,7 +14,7 @@ readonly git_root_dir="$(git rev-parse --show-toplevel)"
 
 # Usage -----------------------------------------------------------------------
 
-num_threads="1" # NB: does not apply to gzip and Quip!
+num_threads="1"
 dry_run=false
 work_dir="${git_root_dir}/tmp"
 
