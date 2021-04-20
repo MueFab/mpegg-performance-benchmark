@@ -24,7 +24,7 @@ deez_version="1.9" # DeeZ does not have a '-v|--version' flag.
 # DSRC
 mkdir dsrc-2.00
 cd dsrc-2.00
-wget sun.aei.polsl.pl/REFRESH/dsrc/downloads/2.0rc2/linux/dsrc
+wget http://sun.aei.polsl.pl/REFRESH/dsrc/downloads/2.0rc2/linux/dsrc
 chmod u+x dsrc
 cd ..
 dsrc="$(pwd)/dsrc-2.00/dsrc"
