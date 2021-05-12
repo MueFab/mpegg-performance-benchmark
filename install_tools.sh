@@ -47,10 +47,14 @@ samtools="$(pwd)/samtools-1.11/install/bin/samtools"
 samtools_version="$(${samtools} --version | head --lines=1 | cut --delimiter=' ' --fields=2)"
 
 # Quip
-wget https://homes.cs.washington.edu/~dcjones/quip/quip-1.1.8.tar.gz
-tar --extract --file=quip-1.1.8.tar.gz
-rm quip-1.1.8.tar.gz
+git clone https://github.com/dcjones/quip.git
+mv quip quip-1.1.8
 cd quip-1.1.8
+git checkout tags/v1.1.8
+
+sed -i 's/AM_INIT_AUTOMAKE(\[foreign -Wall -Werror\])/AM_INIT_AUTOMAKE(\[foreign -Wall -Werror subdir-objects\])/' configure.ac  # Need subdir-objects option to compile on some systems
+
+autoreconf -i
 ./configure --prefix="$(pwd)/install/"
 make --jobs
 make install
