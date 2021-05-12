@@ -12,6 +12,28 @@ readonly tools_dir="${git_root_dir}/tools"
 mkdir "${tools_dir}"
 cd "${tools_dir}"
 
+# Genie
+git clone https://github.com/mitogen/genie.git
+mv genie genie-develop
+cd genie-develop
+git checkout develop
+cmake .
+make
+cd ..
+genie="$(pwd)/genie-develop/bin/genie"
+genie_version="develop" # Genie does not have a '-v|--version' flag.
+
+# Spring
+git clone https://github.com/shubhamchandak94/Spring
+mv Spring spring-1.0.1
+cd spring-1.0.1
+git checkout tags/v1.0.1
+cmake .
+make
+cd ..
+spring="$(pwd)/spring-1.0.1/spring"
+spring_version="1.0.1" # Spring does not have a '-v|--version' flag.
+
 # DeeZ
 git clone https://github.com/sfu-compbio/deez.git deez-1.9
 cd deez-1.9
@@ -60,8 +82,10 @@ make --jobs
 make install
 cd ..
 quip="$(pwd)/quip-1.1.8/install/bin/quip"
-quip_version="$(${quip} --version | cut --delimiter=' ' --fields=2)"
+quip_version="$(${quip} --version | cut --delimiter='-' --fields=1 | cut --delimiter=' ' --fields=2)"
 
+echo "[${self_name}] Spring ${spring_version}: ${spring}"
+echo "[${self_name}] Genie ${genie_version}: ${genie}"
 echo "[${self_name}] DeeZ ${deez_version}: ${deez}"
 echo "[${self_name}] DSRC ${dsrc_version}: ${dsrc}"
 echo "[${self_name}] gzip ${gzip_version}: ${gzip}"

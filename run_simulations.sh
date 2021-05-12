@@ -72,6 +72,8 @@ else
 fi
 
 # Tools
+readonly spring="${tools_dir}/spring-1.0.1/spring"
+readonly genie="${tools_dir}/genie-develop/bin/genie"
 readonly deez="${tools_dir}/deez-1.9/deez"
 readonly dsrc="${tools_dir}/dsrc-2.00/dsrc"
 readonly gzip="/usr/bin/gzip"
@@ -115,6 +117,30 @@ for g in "${fastq_gz_files[@]}"; do
     f=$(basename "${g%.*}")
     f="${work_dir}/${f}"
     "${gzip}" --decompress --stdout "${g}" > "${f}"
+
+    # Spring
+    name="Spring"
+    id="spring"
+    do_roundtrip \
+        "${name}" \
+        "${id}" \
+        "${num_threads}" \
+        "${spring} -c -t ${num_threads} -i ${f} -o ${f}.${id}" \
+        "${spring} -d -t ${num_threads} -i ${f}.${id} -o ${f}.${id}.fastq" \
+        "${f}"
+    rm "${f}.${id}" "${f}.${id}.fastq"
+
+    # Genie
+    name="Genie"
+    id="genie.mgb"
+    do_roundtrip \
+        "${name}" \
+        "${id}" \
+        "${num_threads}" \
+        "${genie} run -t ${num_threads} -i ${f} -o ${f}.${id}" \
+        "${genie} run -t ${num_threads} -i ${f}.${id} -o ${f}.${id}.fastq" \
+        "${f}"
+    rm "${f}.${id}" "${f}.${id}.fastq"
 
     # DSRC 2
     name="DSRC 2"
@@ -173,6 +199,18 @@ for ((i=0; i<${#bam_files[@]}; i++)); do
     sam=$(basename "${bam%.*}.sam")
     sam="${work_dir}/${sam}"
     "${samtools}" view -@ "${num_threads}" -h "${bam}" -o "${sam}"
+
+    # Genie
+#    name="Genie"
+#    id="genie.mgb"
+#    do_roundtrip \
+#        "${name}" \
+#        "${id}" \
+#        "${num_threads}" \
+#        "${genie} run -t ${num_threads} -i ${sam} -o ${f}.${id}" \
+#        "${genie} run -t ${num_threads} -i ${sam}.${id} -o ${sam}.${id}.sam" \
+#        "${sam}"
+#    rm "${sam}.${id}" "${sam}.${id}.sam"
 
     # BAM
     name="BAM"
