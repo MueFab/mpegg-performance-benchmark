@@ -88,8 +88,8 @@ cd ..
 quip="$(pwd)/quip-1.1.8/install/bin/quip"
 quip_version="$(${quip} --version | cut --delimiter='-' --fields=1 | cut --delimiter=' ' --fields=2)"
 
-echo "[${self_name}] Spring ${spring_version}: ${spring}"
 echo "[${self_name}] Genie ${genie_version}: ${genie}"
+echo "[${self_name}] Spring ${spring_version}: ${spring}"
 echo "[${self_name}] DeeZ ${deez_version}: ${deez}"
 echo "[${self_name}] DSRC ${dsrc_version}: ${dsrc}"
 echo "[${self_name}] gzip ${gzip_version}: ${gzip}"
