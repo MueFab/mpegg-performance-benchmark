@@ -125,8 +125,8 @@ for g in "${fastq_gz_files[@]}"; do
         "${name}" \
         "${id}" \
         "${num_threads}" \
-        "${spring} -c -t ${num_threads} -i ${f} -o ${f}.${id}" \
-        "${spring} -d -t ${num_threads} -i ${f}.${id} -o ${f}.${id}.fastq" \
+        "${spring} --compress --num-threads ${num_threads} --input-file ${f} --output-file ${f}.${id}" \
+        "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq" \
         "${f}"
     rm "${f}.${id}" "${f}.${id}.fastq"
 
@@ -137,8 +137,8 @@ for g in "${fastq_gz_files[@]}"; do
         "${name}" \
         "${id}" \
         "${num_threads}" \
-        "${genie} run -t ${num_threads} -i ${f} -o ${f}.${id}" \
-        "${genie} run -t ${num_threads} -i ${f}.${id} -o ${f}.${id}.fastq" \
+        "${genie} run --threads ${num_threads} --input-file ${f} --output-file ${f}.${id}" \
+        "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq" \
         "${f}"
     rm "${f}.${id}" "${f}.${id}.fastq"
 
@@ -207,8 +207,8 @@ for ((i=0; i<${#bam_files[@]}; i++)); do
 #        "${name}" \
 #        "${id}" \
 #        "${num_threads}" \
-#        "${genie} run -t ${num_threads} -i ${sam} -o ${f}.${id}" \
-#        "${genie} run -t ${num_threads} -i ${sam}.${id} -o ${sam}.${id}.sam" \
+#        "${genie} run --threads ${num_threads} --input-file ${sam} --output-file ${f}.${id}" \
+#        "${genie} run --threads ${num_threads} --input-file ${sam}.${id} --output-file ${sam}.${id}.sam" \
 #        "${sam}"
 #    rm "${sam}.${id}" "${sam}.${id}.sam"
 
