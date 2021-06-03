@@ -118,8 +118,8 @@ for g in "${fastq_gz_files[@]}"; do
     f="${work_dir}/${f}"
     "${gzip}" --decompress --stdout "${g}" > "${f}"
 
-    # Spring
-    name="Spring"
+    # SPRING
+    name="SPRING"
     id="spring"
     do_roundtrip \
         "${name}" \
