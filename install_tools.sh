@@ -23,7 +23,7 @@ cmake ..
 make
 cd ..
 cd ..
-genie="$(pwd)/genie-develop/bin/genie"
+genie="$(pwd)/genie-develop/build/bin/genie"
 genie_version="develop" # Genie does not have a '-v|--version' flag.
 
 # SPRING
@@ -37,7 +37,7 @@ cmake ..
 make
 cd ..
 cd ..
-spring="$(pwd)/spring-1.0.1/spring"
+spring="$(pwd)/spring-1.0.1/build/spring"
 spring_version="1.0.1" # SPRING does not have a '-v|--version' flag.
 
 # DeeZ

@@ -72,8 +72,8 @@ else
 fi
 
 # Tools
-readonly spring="${tools_dir}/spring-1.0.1/spring"
-readonly genie="${tools_dir}/genie-develop/bin/genie"
+readonly spring="${tools_dir}/spring-1.0.1/build/spring"
+readonly genie="${tools_dir}/genie-develop/build/bin/genie"
 readonly deez="${tools_dir}/deez-1.9/deez"
 readonly dsrc="${tools_dir}/dsrc-2.00/dsrc"
 readonly gzip="/usr/bin/gzip"
