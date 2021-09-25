@@ -105,18 +105,9 @@ function do_roundtrip () {
     wc --bytes "${input_}.${id_}" > "${input_}.${id_}.size.txt"
 }
 
-
-
-
-# Unaligned -------------------------------------------------------------------
-
-for g in "${fastq_gz_files[@]}"; do
-
-    # Unpack *.fastq.gz to *.fastq
-    echo "[${self_name}] unpacking: ${g}"
-    f=$(basename "${g%.*}")
-    f="${work_dir}/${f}"
-    "${gzip}" --decompress --stdout "${g}" > "${f}"
+function do_fastq_paired () {
+    f="${1}"
+    f2="${2}"
 
     # SPRING
     name="SPRING"
@@ -125,22 +116,55 @@ for g in "${fastq_gz_files[@]}"; do
         "${name}" \
         "${id}" \
         "${num_threads}" \
-        "${spring} --compress --num-threads ${num_threads} --input-file ${f} --output-file ${f}.${id}" \
-        "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq" \
+        "${spring} --compress --num-threads ${num_threads} --input-file ${f} ${f2} --output-file ${f}.${id}" \
+        "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq ${f2}.${id}.fastq" \
         "${f}"
-    rm "${f}.${id}" "${f}.${id}.fastq"
+    rm "${f}.${id}" "${f}.${id}.fastq" "${f2}.${id}.fastq"
 
     # Genie
     name="Genie"
     id="genie.mgb"
+    ${genie} transcode-fastq --input-file ${f} --input-suppl-file ${f2} --output-file ${f}.mgrec --threads ${num_threads}
     do_roundtrip \
         "${name}" \
         "${id}" \
         "${num_threads}" \
-        "${genie} run --threads ${num_threads} --input-file ${f} --output-file ${f}.${id}" \
-        "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq" \
+        "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
+        "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
         "${f}"
-    rm "${f}.${id}" "${f}.${id}.fastq"
+    rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec"
+}
+
+function do_fastq () {
+    f="${1}"
+    unpaired="${2}"
+
+    if [ ${unpaired} == "True" ]; then
+        # SPRING
+        name="SPRING"
+        id="spring"
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "${num_threads}" \
+            "${spring} --compress --num-threads ${num_threads} --input-file ${f} --output-file ${f}.${id}" \
+            "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.fastq"
+
+        # Genie
+        name="Genie"
+        id="genie.mgb"
+        ${genie} transcode-fastq --input-file ${f} --output-file ${f}.mgrec --threads ${num_threads}
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "${num_threads}" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec"
+    fi
 
     # DSRC 2
     name="DSRC 2"
@@ -177,14 +201,45 @@ for g in "${fastq_gz_files[@]}"; do
         "${quip} --decompress --stdout ${f}.${id} > ${f}.${id}.fastq" \
         "${f}"
     rm "${f}.${id}" "${f}.${id}.fastq"
+}
 
-    # Delete temporary *.fastq file
-    rm "${f}"
 
+# Unaligned -------------------------------------------------------------------
+
+for g in "${fastq_gz_files[@]}"; do
+    arrIN=(${g//;/ })
+    
+    # Unpack *.fastq.gz to *.fastq
+    g=${arrIN[0]}
+    echo "[${self_name}] unpacking: ${g}"
+    file=$(basename "${g%.*}")
+    file="${work_dir}/${file}"
+    "${gzip}" --decompress --stdout "${g}" > "${file}"
+
+    if [ ${#arrIN[@]} == "1" ]; then
+        do_fastq "${file}" "True"
+        rm "${file}"
+    else
+        do_fastq "${file}" "False"
+
+        # Unpack *.fastq.gz to *.fastq
+        g=${arrIN[1]}
+        echo "[${self_name}] unpacking: ${g}"
+        file2=$(basename "${g%.*}")
+        file2="${work_dir}/${file2}"
+        "${gzip}" --decompress --stdout "${g}" > "${file2}"
+
+        do_fastq "${file2}" "False"
+
+        do_fastq_paired "${file}" "${file2}"
+
+        rm "${file}"
+        rm "${file2}"
+    fi
 done
 
 
-
+exit 0
 
 # Aligned ---------------------------------------------------------------------
 
