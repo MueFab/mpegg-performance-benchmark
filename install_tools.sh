@@ -12,15 +12,26 @@ readonly tools_dir="${git_root_dir}/tools"
 mkdir "${tools_dir}"
 cd "${tools_dir}"
 
-# Genie
+# htslib
+git clone https://github.com/samtools/htslib.git
+cd htslib
+git submodule update --init --recursive
+autoreconf -i
+mkdir build
+./configure --prefix="${PWD}/build"
+make --jobs
+make install
+cd ..
+
+# genie
 git clone https://github.com/mitogen/genie.git
 mv genie genie-develop
 cd genie-develop
 git checkout develop
 mkdir build
 cd build
-cmake ..
-make
+cmake .. -DHTSlib_INCLUDE_DIR=../../htslib/build/include -DHTSlib_LIBRARY=../../htslib/build/lib/libhts.so
+make --jobs
 cd ..
 cd ..
 genie="$(pwd)/genie-develop/build/bin/genie"
@@ -34,7 +45,7 @@ git checkout tags/v1.0.1
 mkdir build
 cd build
 cmake ..
-make
+make --jobs
 cd ..
 cd ..
 spring="$(pwd)/spring-1.0.1/build/spring"
