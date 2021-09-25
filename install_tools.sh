@@ -15,6 +15,7 @@ cd "${tools_dir}"
 # htslib
 git clone https://github.com/samtools/htslib.git
 cd htslib
+git checkout tags/1.13
 git submodule update --init --recursive
 autoreconf -i
 mkdir build
