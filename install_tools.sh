@@ -31,7 +31,12 @@ cd genie-develop
 git checkout develop
 mkdir build
 cd build
-cmake .. -DHTSlib_INCLUDE_DIR=../../htslib/build/include -DHTSlib_LIBRARY=../../htslib/build/lib/libhts.so
+if [ -d ../../htslib/build/lib ]; then
+    DHTSlib_LIBRARY="../../htslib/build/lib/libhts.so"
+else
+    DHTSlib_LIBRARY="../../htslib/build/lib64/libhts.so"
+fi
+cmake .. -DHTSlib_INCLUDE_DIR=../../htslib/build/include -DHTSlib_LIBRARY=$DHTSlib_LIBRARY
 make --jobs
 cd ..
 cd ..
