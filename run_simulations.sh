@@ -16,6 +16,7 @@ readonly git_root_dir="$(git rev-parse --show-toplevel)"
 
 num_threads="1"
 test_run=false
+genie_run=false
 work_dir="${git_root_dir}/tmp"
 
 print_usage () {
@@ -25,6 +26,7 @@ print_usage () {
     echo "  -h, --help                     print this help"
     echo "  -@, --num_threads NUM_THREADS  number of threads (does not apply to gzip and Quip) (default: ${num_threads})"
     echo "  -n, --test_run                 perform test run"
+    echo "  -g, --genie_only               Perform genie roundtrips only" 
     echo "  -w, --work_dir WORK_DIR        work directory (default: ${work_dir})"
 }
 
@@ -33,6 +35,7 @@ while [[ "${#}" -gt 0 ]]; do
         -h|--help) print_usage; exit 1;;
         -@|--num_threads) num_threads="${2}"; shift;;
         -n|--test_run) test_run=true;;
+        -g|--genie_only) genie_run=true;;
         -w|--work_dir) work_dir="${2}"; shift;;
         *) echo "[${self_name}] error: unknown parameter passed: ${1}"; print_usage; exit 1;;
     esac
@@ -41,6 +44,7 @@ done
 
 echo "[${self_name}] number of threads: ${num_threads}"
 echo "[${self_name}] test run: ${test_run}"
+echo "[${self_name}] genie run: ${genie_run}"
 echo "[${self_name}] work directory: ${work_dir}"
 
 
@@ -109,27 +113,43 @@ function do_fastq_paired () {
     f="${1}"
     f2="${2}"
 
-    # SPRING
-    name="SPRING"
-    id="spring"
-    do_roundtrip \
-        "${name}" \
-        "${id}" \
-        "${num_threads}" \
-        "${spring} --compress --num-threads ${num_threads} --input-file ${f} ${f2} --output-file ${f}.${id}" \
-        "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq ${f2}.${id}.fastq" \
-        "${f}"
-    rm "${f}.${id}" "${f}.${id}.fastq" "${f2}.${id}.fastq"
+    if [ $genie_run == false ]
+    then
+        # SPRING
+        name="SPRING"
+        id="spring"
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "${num_threads}" \
+            "${spring} --compress --num-threads ${num_threads} --input-file ${f} ${f2} --output-file ${f}.${id}" \
+            "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq ${f2}.${id}.fastq" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.fastq" "${f2}.${id}.fastq"
+    fi
 
     # Genie
-    name="Genie"
-    id="genie.mgb"
+    name="Genie_GA"
+    id="genie_ga.mgb"
     ${genie} transcode-fastq --input-file ${f} --input-suppl-file ${f2} --output-file ${f}.mgrec --threads ${num_threads}
     do_roundtrip \
         "${name}" \
         "${id}" \
         "${num_threads}" \
         "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
+        "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+        "${f}"
+    rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec"
+
+    # Genie
+    name="Genie_LL"
+    id="genie_ll.mgb"
+    ${genie} transcode-fastq --input-file ${f} --input-suppl-file ${f2} --output-file ${f}.mgrec --threads ${num_threads}
+    do_roundtrip \
+        "${name}" \
+        "${id}" \
+        "${num_threads}" \
+        "${genie} run --low-latency --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
         "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
         "${f}"
     rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec"
@@ -140,21 +160,24 @@ function do_fastq () {
     unpaired="${2}"
 
     if [ ${unpaired} == "True" ]; then
-        # SPRING
-        name="SPRING"
-        id="spring"
-        do_roundtrip \
-            "${name}" \
-            "${id}" \
-            "${num_threads}" \
-            "${spring} --compress --num-threads ${num_threads} --input-file ${f} --output-file ${f}.${id}" \
-            "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq" \
-            "${f}"
-        rm "${f}.${id}" "${f}.${id}.fastq"
+        if [ $genie_run == false ]
+        then
+            # SPRING
+            name="SPRING"
+            id="spring"
+            do_roundtrip \
+                "${name}" \
+                "${id}" \
+                "${num_threads}" \
+                "${spring} --compress --num-threads ${num_threads} --input-file ${f} --output-file ${f}.${id}" \
+                "${spring} --decompress --num-threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.fastq" \
+                "${f}"
+            rm "${f}.${id}" "${f}.${id}.fastq"
+        fi
 
         # Genie
-        name="Genie"
-        id="genie.mgb"
+        name="Genie_GA"
+        id="genie_ga.mgb"
         ${genie} transcode-fastq --input-file ${f} --output-file ${f}.mgrec --threads ${num_threads}
         do_roundtrip \
             "${name}" \
@@ -164,43 +187,60 @@ function do_fastq () {
             "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
             "${f}"
         rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec"
+
+        # Genie
+        name="Genie_LL"
+        id="genie_ll.mgb"
+        ${genie} transcode-fastq --input-file ${f} --output-file ${f}.mgrec --threads ${num_threads}
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "${num_threads}" \
+            "${genie} run --low-latency --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec"
     fi
 
-    # DSRC 2
-    name="DSRC 2"
-    id="dsrc-2"
-    do_roundtrip \
-        "${name}" \
-        "${id}" \
-        "${num_threads}" \
-        "${dsrc} c -t${num_threads} ${f} ${f}.${id}" \
-        "${dsrc} d -t${num_threads} ${f}.${id} ${f}.${id}.fastq" \
-        "${f}"
-    rm "${f}.${id}" "${f}.${id}.fastq"
+    if [ $genie_run == false ]
+    then
 
-    # gzip
-    name="gzip"
-    id="gzip"
-    do_roundtrip \
-        "${name}" \
-        "${id}" \
-        "1" \
-        "${gzip} --stdout ${f} > ${f}.${id}" \
-        "${gzip} --decompress --stdout ${f}.${id} > ${f}.${id}.fastq" \
-        "${f}"
-    rm "${f}.${id}" "${f}.${id}.fastq"
+        # DSRC 2
+        name="DSRC 2"
+        id="dsrc-2"
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "${num_threads}" \
+            "${dsrc} c -t${num_threads} ${f} ${f}.${id}" \
+            "${dsrc} d -t${num_threads} ${f}.${id} ${f}.${id}.fastq" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.fastq"
 
-    # Quip
-    name="Quip"
-    id="qp"
-    do_roundtrip \
-        "${name}" \
-        "${id}" \
-        "1" \
-        "${quip} ${f}" \
-        "${quip} --decompress --stdout ${f}.${id} > ${f}.${id}.fastq" \
-        "${f}"
-    rm "${f}.${id}" "${f}.${id}.fastq"
+        # gzip
+        name="gzip"
+        id="gzip"
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "1" \
+            "${gzip} --stdout ${f} > ${f}.${id}" \
+            "${gzip} --decompress --stdout ${f}.${id} > ${f}.${id}.fastq" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.fastq"
+
+        # Quip
+        name="Quip"
+        id="qp"
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "1" \
+            "${quip} ${f}" \
+            "${quip} --decompress --stdout ${f}.${id} > ${f}.${id}.fastq" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.fastq"
+    fi
 }
 
 
