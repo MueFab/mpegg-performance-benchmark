@@ -1,1 +1,1 @@
-test/samspec.bam
+test/samspec.bam;test/samspec.fasta.gz

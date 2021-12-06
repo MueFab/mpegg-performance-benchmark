@@ -68,11 +68,9 @@ readonly tools_dir="${git_root_dir}/tools"
 if [[ "${test_run}" == true ]]; then
     readarray -t fastq_gz_files < "${git_root_dir}/test/fastq_gz_files.txt"
     readarray -t bam_files < "${git_root_dir}/test/bam_files.txt"
-    readarray -t ref_files < "${git_root_dir}/test/ref_files.txt"
 else
     readarray -t fastq_gz_files < "${git_root_dir}/fastq_gz_files.txt"
     readarray -t bam_files < "${git_root_dir}/bam_files.txt"
-    readarray -t ref_files < "${git_root_dir}/ref_files.txt"
 fi
 
 # Tools
@@ -101,7 +99,7 @@ function do_roundtrip () {
     printf "[%s] %-15s %10s @ %d thread(s)    %s\n" "${self_name}" "compressing:" "${name_}" "${num_threads_}" "${input_}"
     timed_compress_cmd_="${time} --verbose --output ${input_}.${id_}.time_compress.txt ${compress_cmd_}"
     eval "${timed_compress_cmd_}" || ( echo "[${self_name}] ${name_} compression error (proceeding)" && true )
-
+    
     printf "[%s] %-15s %10s @ %d thread(s)    %s\n" "${self_name}" "decompressing:" "${name_}" "${num_threads_}" "${input_}"
     timed_decompress_cmd_="${time} --verbose --output ${input_}.${id_}.time_decompress.txt ${decompress_cmd_}"
     eval "${timed_decompress_cmd_}" || ( echo "[${self_name}] ${name_} decompression error (proceeding)" && true )
@@ -244,6 +242,129 @@ function do_fastq () {
 }
 
 
+function do_bam () {
+    f="${1}"
+    ref_file="${2}"
+    
+    if [ ${ref_file} != "" ]; then
+        name="Genie_Ref"
+        id="genie_ref.mgb"
+        "${samtools}" sort -n -o ${f}.sorted.sam -@ ${num_threads} ${f}
+        ${genie} transcode-sam --threads ${num_threads} --input-file ${f}.sorted.sam --output-file ${f}.mgrec -r ${ref_file} -w ${work_dir}
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "${num_threads}" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id} --input-ref-file ${ref_file}" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec" ${f}.sorted.sam
+    fi
+    
+    name="Genie_LA"
+    id="genie_la.mgb"
+    "${samtools}" sort -n -o ${f}.sorted.sam -@ ${num_threads} ${f}
+    ${genie} transcode-sam --threads ${num_threads} --input-file ${f}.sorted.sam --output-file ${f}.mgrec --no_ref -w ${work_dir}
+    do_roundtrip \
+        "${name}" \
+        "${id}" \
+        "${num_threads}" \
+        "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
+        "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+        "${f}"
+    rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec" ${f}.sorted.sam
+    
+    if [ $genie_run == false ]
+    then
+        # BAM
+        name="BAM"
+        id="bam"
+        do_roundtrip \
+            "${name}" \
+            "${id}" \
+            "${num_threads}" \
+            "${samtools} view -@ ${num_threads} -b -h ${f} -o ${f}.${id}" \
+            "${samtools} view -@ ${num_threads} -h ${f}.${id} -o ${f}.${id}.sam" \
+            "${f}"
+        rm "${f}.${id}" "${f}.${id}.sam"
+
+        if [ ${ref_file} != "" ]; then
+            # CRAM 3.0
+            name="CRAM 3.0"
+            id="cram-3.0"
+            do_roundtrip \
+                "${name}" \
+                "${id}" \
+                "${num_threads}" \
+                "${samtools} view -@ ${num_threads} -C -h ${f} -T ${ref_file} -o ${f}.${id}" \
+                "${samtools} view -@ ${num_threads} -h ${f}.${id} -o ${f}.${id}.sam" \
+                "${f}"
+            rm "${f}.${id}" "${f}.${id}.sam"
+        else
+            # CRAM 3.0
+            name="CRAM 3.0"
+            id="cram-3.0"
+            do_roundtrip \
+                "${name}" \
+                "${id}" \
+                "${num_threads}" \
+                "${samtools} view -@ ${num_threads} -O CRAM,embed_ref -h ${f} -o ${f}.${id}" \
+                "${samtools} view -@ ${num_threads} -h ${f}.${id} -o ${f}.${id}.sam" \
+                "${f}"
+            rm "${f}.${id}" "${f}.${id}.sam"
+        fi
+        
+        if [ ${ref_file} != "" ]; then
+            # DeeZ
+            name="DeeZ"
+            id="deez"
+            do_roundtrip \
+                "${name}" \
+                "${id}" \
+                "${num_threads}" \
+                "${deez} --threads ${num_threads} --reference ${ref_file} ${f} --output ${f}.${id}" \
+                "${deez} --threads ${num_threads} --reference ${ref_file} ${f}.${id} --output ${f}.${id}.sam --header" \
+                "${f}"
+            rm "${f}.${id}" "${f}.${id}.sam"
+        else
+            # DeeZ
+            name="DeeZ"
+            id="deez"
+            do_roundtrip \
+                "${name}" \
+                "${id}" \
+                "${num_threads}" \
+                "${deez} --threads ${num_threads} ${f} --output ${f}.${id}" \
+                "${deez} --threads ${num_threads} ${f}.${id} --output ${f}.${id}.sam --header" \
+                "${f}"
+            rm "${f}.${id}" "${f}.${id}.sam"
+        fi
+    fi
+}
+
+# Aligned -------------------------------------------------------------------
+
+for g in "${bam_files[@]}"; do
+    arrIN=(${g//;/ })
+    
+    bam_file=${arrIN[0]}
+    echo "[${self_name}] unpacking: ${bam_file}"
+    sam_file=$(basename "${bam_file%.*}.sam")
+    sam_file="${work_dir}/${sam_file}"
+    "${samtools}" view -@ "${num_threads}" -h "${bam_file}" -o "${sam_file}"
+
+    if [ ${#arrIN[@]} == "2" ]; then
+        g=${arrIN[1]}
+        echo "[${self_name}] unpacking: ${g}"
+        ref_file=$(basename "${g%.*}")
+        ref_file="${work_dir}/${ref_file}"
+        "${gzip}" --decompress --stdout "${g}" > "${ref_file}"
+    fi
+    do_bam ${sam_file} ${ref_file}
+    rm "${sam_file}"
+    rm -f "${ref_file}"
+done
+
 # Unaligned -------------------------------------------------------------------
 
 for g in "${fastq_gz_files[@]}"; do
@@ -276,74 +397,4 @@ for g in "${fastq_gz_files[@]}"; do
         rm "${file}"
         rm "${file2}"
     fi
-done
-
-
-exit 0
-
-# Aligned ---------------------------------------------------------------------
-
-for ((i=0; i<${#bam_files[@]}; i++)); do
-
-    bam=${bam_files[i]}
-    ref=${ref_files[i]}
-
-    # Unpack *.bam to *.sam
-    echo "[${self_name}] unpacking: ${bam}"
-    # sam="" # trim '.bam' and append '.sam'
-    sam=$(basename "${bam%.*}.sam")
-    sam="${work_dir}/${sam}"
-    "${samtools}" view -@ "${num_threads}" -h "${bam}" -o "${sam}"
-
-    # Genie
-#    name="Genie"
-#    id="genie.mgb"
-#    do_roundtrip \
-#        "${name}" \
-#        "${id}" \
-#        "${num_threads}" \
-#        "${genie} run --threads ${num_threads} --input-file ${sam} --output-file ${f}.${id}" \
-#        "${genie} run --threads ${num_threads} --input-file ${sam}.${id} --output-file ${sam}.${id}.sam" \
-#        "${sam}"
-#    rm "${sam}.${id}" "${sam}.${id}.sam"
-
-    # BAM
-    name="BAM"
-    id="bam"
-    do_roundtrip \
-        "${name}" \
-        "${id}" \
-        "${num_threads}" \
-        "${samtools} view -@ ${num_threads} -b -h ${sam} -o ${sam}.${id}" \
-        "${samtools} view -@ ${num_threads} -h ${sam}.${id} -o ${sam}.${id}.sam" \
-        "${sam}"
-    rm "${sam}.${id}" "${sam}.${id}.sam"
-
-    # CRAM 3.0
-    name="CRAM 3.0"
-    id="cram-3.0"
-    do_roundtrip \
-        "${name}" \
-        "${id}" \
-        "${num_threads}" \
-        "${samtools} view -@ ${num_threads} -C -h ${sam} -T ${ref} -o ${sam}.${id}" \
-        "${samtools} view -@ ${num_threads} -h ${sam}.${id} -o ${sam}.${id}.sam" \
-        "${sam}"
-    rm "${sam}.${id}" "${sam}.${id}.sam"
-
-    # DeeZ
-    name="DeeZ"
-    id="deez"
-    do_roundtrip \
-        "${name}" \
-        "${id}" \
-        "${num_threads}" \
-        "${deez} --threads ${num_threads} --reference ${ref} ${sam} --output ${sam}.${id}" \
-        "${deez} --threads ${num_threads} --reference ${ref} ${sam}.${id} --output ${sam}.${id}.sam --header" \
-        "${sam}"
-    rm "${sam}.${id}" "${sam}.${id}.sam"
-
-    # Delete temporary *.sam file
-    rm "${sam}"
-
 done
