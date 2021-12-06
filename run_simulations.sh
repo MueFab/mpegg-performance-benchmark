@@ -255,7 +255,7 @@ function do_bam () {
             "${name}" \
             "${id}" \
             "${num_threads}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id} --input-ref-file ${ref_file}" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id} --input-ref-file ${ref_file} --embedded-ref none" \
             "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
             "${f}"
         rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec" ${f}.sorted.sam
