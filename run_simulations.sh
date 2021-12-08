@@ -359,6 +359,8 @@ for g in "${bam_files[@]}"; do
         ref_file=$(basename "${g%.*}")
         ref_file="${work_dir}/${ref_file}"
         "${gzip}" --decompress --stdout "${g}" > "${ref_file}"
+    else
+        ref_file=""
     fi
     do_bam ${sam_file} ${ref_file}
     rm "${sam_file}"
