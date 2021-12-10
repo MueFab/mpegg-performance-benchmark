@@ -246,7 +246,7 @@ function do_bam () {
     f="${1}"
     ref_file="${2}"
     
-    if [ ${ref_file} != "" ]; then
+    if [ "${ref_file}" != "" ]; then
         name="Genie_Ref"
         id="genie_ref.mgb"
         "${samtools}" sort -n -o ${f}.sorted.sam -@ ${num_threads} ${f}
@@ -255,7 +255,7 @@ function do_bam () {
             "${name}" \
             "${id}" \
             "${num_threads}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id} --input-ref-file ${ref_file} --embedded-ref none" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id} --input-ref-file ${ref_file}" \
             "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
             "${f}"
         rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec" ${f}.sorted.sam
@@ -362,7 +362,7 @@ for g in "${bam_files[@]}"; do
     else
         ref_file=""
     fi
-    do_bam ${sam_file} ${ref_file}
+    do_bam "${sam_file}" "${ref_file}"
     rm "${sam_file}"
     rm -f "${ref_file}"
 done
