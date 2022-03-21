@@ -15,7 +15,7 @@ cd "${tools_dir}"
 # htslib
 git clone https://github.com/samtools/htslib.git
 cd htslib
-git checkout tags/1.13
+git checkout tags/1.15
 git submodule update --init --recursive
 autoreconf -i
 mkdir build
@@ -26,9 +26,8 @@ cd ..
 
 # genie
 git clone https://github.com/mitogen/genie.git
-mv genie genie-develop
-cd genie-develop
-git checkout develop
+cd genie
+git checkout 4403858
 mkdir build
 cd build
 if [ -d ../../htslib/build/lib ]; then
@@ -40,8 +39,8 @@ cmake .. -DHTSlib_INCLUDE_DIR=../../htslib/build/include -DHTSlib_LIBRARY=$DHTSl
 make --jobs
 cd ..
 cd ..
-genie="$(pwd)/genie-develop/build/bin/genie"
-genie_version="develop" # Genie does not have a '-v|--version' flag.
+genie="$(pwd)/genie/build/bin/genie"
+genie_version="4403858" # Genie does not have a '-v|--version' flag.
 
 # SPRING
 git clone https://github.com/shubhamchandak94/Spring
@@ -64,7 +63,7 @@ git checkout 92cd56b
 make --jobs
 cd ..
 deez="$(pwd)/deez-1.9/deez"
-deez_version="1.9" # DeeZ does not have a '-v|--version' flag.
+deez_version="1.9-92cd56b" # DeeZ does not have a '-v|--version' flag.
 
 # DSRC
 mkdir dsrc-2.00
@@ -80,15 +79,15 @@ gzip="$(command -v gzip)"
 gzip_version="$(${gzip} --version | head --lines=1 | cut --delimiter=' ' --fields=2)"
 
 # Samtools
-wget https://github.com/samtools/samtools/releases/download/1.11/samtools-1.11.tar.bz2
-tar --extract --file=samtools-1.11.tar.bz2
-rm samtools-1.11.tar.bz2
-cd samtools-1.11
+wget https://github.com/samtools/samtools/releases/download/1.15/samtools-1.15.tar.bz2
+tar --extract --file=samtools-1.15.tar.bz2
+rm samtools-1.15.tar.bz2
+cd samtools-1.15
 ./configure --prefix="$(pwd)/install/"
 make --jobs
 make install
 cd ..
-samtools="$(pwd)/samtools-1.11/install/bin/samtools"
+samtools="$(pwd)/samtools-1.15/install/bin/samtools"
 samtools_version="$(${samtools} --version | head --lines=1 | cut --delimiter=' ' --fields=2)"
 
 # Quip

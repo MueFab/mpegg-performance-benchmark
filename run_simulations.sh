@@ -75,11 +75,11 @@ fi
 
 # Tools
 readonly spring="${tools_dir}/spring-1.0.1/build/spring"
-readonly genie="${tools_dir}/genie-develop/build/bin/genie"
+readonly genie="${tools_dir}/genie/build/bin/genie"
 readonly deez="${tools_dir}/deez-1.9/deez"
 readonly dsrc="${tools_dir}/dsrc-2.00/dsrc"
 readonly gzip="/usr/bin/gzip"
-readonly samtools="${tools_dir}/samtools-1.11/install/bin/samtools"
+readonly samtools="${tools_dir}/samtools-1.15/install/bin/samtools"
 readonly quip="${tools_dir}/quip-1.1.8/install/bin/quip"
 readonly time="/usr/bin/time"
 
