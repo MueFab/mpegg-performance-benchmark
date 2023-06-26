@@ -11,7 +11,9 @@ sudo apt-get install \
     gcc \
     make \
     perl \
+    openmpi-bin \
     libbz2-dev \
+    libdeflate-dev \
     libcurl4-openssl-dev \
     liblzma-dev \
     libncurses5-dev \
