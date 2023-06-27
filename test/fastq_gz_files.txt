@@ -1,1 +1,2 @@
 test/test.fastq.gz
+test/test2_1.fastq.gz;test/test2_2.fastq.gz

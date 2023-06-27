@@ -1,0 +1,5 @@
+bam
+cram
+deez
+genie_ref
+genie_la

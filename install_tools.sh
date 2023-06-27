@@ -144,6 +144,18 @@ install_pgrc () {(
     echo "[${self_name}] PgRC ${pgrc_version}: ${pgrc}"
 )}
 
+
+install_fastore () {(
+    set -e
+    git clone https://github.com/refresh-bio/FaStore.git
+    fastore_version="0.8"
+    cd FaStore
+    make --jobs
+    cd ../..
+    fastore="$(pwd)/FaStore/scripts/fastore_compress.sh"
+    echo "[${self_name}] fastore ${fastore_version}: ${fastore}"
+)}
+
 install_single() {
     echo "Installing $1..."
     install_$1 &> "${tools_dir}/install_$1.log"
@@ -160,12 +172,15 @@ install_tools () {
     install_single "pigz" &
     install_single "htslib" &
     install_single "deez" &
-    install_single "dsrc" &
     install_single "pgrc" &
     install_single "mstcom" &
-    install_single "genozip" &
     wait $(jobs -p)
     
+    install_single "dsrc" &
+    install_single "genozip" &
+    install_single "fastore" &
+    wait $(jobs -p)
+
     install_single "genie" &
     install_single "samtools" &
     wait $(jobs -p)
