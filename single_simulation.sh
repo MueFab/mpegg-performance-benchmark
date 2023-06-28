@@ -2,17 +2,19 @@
 
 #SBATCH --mail-user=muenteferi@tnt.uni-hannover.de # only <UserName>@tnt.uni-hannover.de is allowed as mail address
 #SBATCH --mail-type=ALL             # Eine Mail wird bei Job-Start/Ende versendet
-#SBATCH --job-name=Genie_Simulation        # Name unter dem der Job in der Job-History gespeichert wird
-#SBATCH --output=slurm-%j-out.txt   # Logdatei für den merged STDOUT/STDERR output (%j wird durch slurm job-ID ersetzt)
 
 #SBATCH --time=3-0             # Maximale Laufzeit des Jobs, bis Slurm diesen abbricht (HH:MM:SS)
-#SBATCH --partition=cpu_cluster     # Partition auf der gerechnet werden soll. Ohne Angabe des Parameters wird auf der
+#SBATCH --partition=cpu_normal     # Partition auf der gerechnet werden soll. Ohne Angabe des Parameters wird auf der
                                     #   Default-Partition gerechnet. Es können mehrere angegeben werden, mit Komma getrennt.
 #SBATCH --tasks-per-node=8          # Reservierung von 4 CPUs pro Rechenknoten
 #SBATCH --mem=64G                   # Reservierung von 10GB RAM
 
 set -e
 set -o pipefail
+
+source /home/muenteferi/nobackup/anaconda/etc/profile.d/conda.sh
+conda activate genie
+
 set -u
 
 readonly self="${0}"
@@ -70,6 +72,7 @@ echo "[${self_name}] result directory: ${result_dir}"
 echo "[${self_name}] file 1: ${file1}"
 echo "[${self_name}] file 2: ${file2}"
 echo "[${self_name}] tool: ${tool}"
+echo "[${self_name}] job ID: $SLURM_JOB_ID"
 
 # Tools directory
 readonly tools_dir="${git_root_dir}/tools"
@@ -120,9 +123,9 @@ function do_roundtrip () {
     fi
 
     in_path=${input_%/*}
-    mv "$in_path"/*.size.txt "${result_dir}"
-    mv "$in_path"/*.time_compress.txt "${result_dir}"
-    mv "$in_path"/*.time_decompress.txt "${result_dir}"
+    mv "${input_}.${id_}.size.txt" "${result_dir}"
+    mv "${input_}.${id_}.time_compress.txt" "${result_dir}"
+    mv "${input_}.${id_}.time_decompress.txt" "${result_dir}"
 }
 
 function do_fastq_paired () {
@@ -173,29 +176,29 @@ function do_fastq_paired () {
         # Genie
         name="Genie_GA"
         id="genie_ga.mgb"
-        ${genie} transcode-fastq --input-file "${f}" --input-suppl-file "${f2}" --output-file "${f}".mgrec --threads "${num_threads}"
+        ${genie} transcode-fastq --input-file "${f}" --input-suppl-file "${f2}" --output-file "${f}"."${id}".mgrec --threads "${num_threads}" -f
         do_roundtrip \
             "${name}" \
             "${id}" \
             "${num_threads}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id}.mgrec --output-file ${f}.${id} -f" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.dec.mgrec -f" \
             "${f}"
-        rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.mgrec"
+        rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.${id}.dec.mgrec"
         return 0
     elif [[ "$tool" == "genie_ll" ]]; then
         # Genie
         name="Genie_LL"
         id="genie_ll.mgb"
-        ${genie} transcode-fastq --input-file "${f}" --input-suppl-file "${f2}" --output-file "${f}".mgrec --threads "${num_threads}"
+        ${genie} transcode-fastq --input-file "${f}" --input-suppl-file "${f2}" --output-file "${f}"."${id}".mgrec --threads "${num_threads}" -f
         do_roundtrip \
             "${name}" \
             "${id}" \
             "${num_threads}" \
-            "${genie} run --low-latency --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+            "${genie} run --low-latency --threads ${num_threads} --input-file ${f}.${id}.mgrec --output-file ${f}.${id} -f" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.dec.mgrec -f" \
             "${f}"
-        rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.mgrec"
+        rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.${id}.dec.mgrec"
         return 0
     else
         echo "No tool $tool for paired fastq files."
@@ -251,29 +254,29 @@ function do_fastq () {
             # Genie
             name="Genie_GA"
             id="genie_ga.mgb"
-            ${genie} transcode-fastq --input-file "${f}" --output-file "${f}".mgrec --threads "${num_threads}"
+            ${genie} transcode-fastq --input-file "${f}" --output-file "${f}"."${id}".mgrec --threads "${num_threads}" -f
             do_roundtrip \
                 "${name}" \
                 "${id}" \
                 "${num_threads}" \
-                "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
-                "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+                "${genie} run --threads ${num_threads} --input-file ${f}.${id}.mgrec --output-file ${f}.${id} -f" \
+                "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.dec.mgrec -f" \
                 "${f}"
-            rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.mgrec"
+            rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.${id}.dec.mgrec"
             return 0
         elif [[ "$tool" == "genie_ll" ]]; then
             # Genie
             name="Genie_LL"
             id="genie_ll.mgb"
-            ${genie} transcode-fastq --input-file "${f}" --output-file "${f}".mgrec --threads "${num_threads}"
+            ${genie} transcode-fastq --input-file "${f}" --output-file "${f}"."${id}".mgrec --threads "${num_threads}" -f
             do_roundtrip \
                 "${name}" \
                 "${id}" \
                 "${num_threads}" \
-                "${genie} run --low-latency --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
-                "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+                "${genie} run --low-latency --threads ${num_threads} --input-file ${f}.${id}.mgrec --output-file ${f}.${id} -f" \
+                "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.dec.mgrec -f" \
                 "${f}"
-            rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.mgrec"
+            rm "${f}.${id}" "${f}.${id}.json" "${f}.${id}.mgrec" "${f}.${id}.dec.mgrec"
             return 0
         fi
     fi
@@ -375,29 +378,29 @@ function do_bam () {
     elif [[ "${ref_file}" != "" && "$tool" == "genie_ref" ]]; then
         name="Genie_Ref"
         id="genie_ref.mgb"
-        "${samtools}" sort -n -o "${f}".sorted.sam -@ "${num_threads}" "${f}"
-        ${genie} transcode-sam --threads "${num_threads}" --input-file "${f}".sorted.sam --output-file "${f}".mgrec -r "${ref_file}" -w "${work_dir}"
+        "${samtools}" sort -n -o "${f}"."${id}".sorted.sam -@ "${num_threads}" "${f}"
+        ${genie} transcode-sam --threads "${num_threads}" --input-file "${f}"."${id}".sorted.sam --output-file "${f}"."${id}".mgrec -r "${ref_file}" -w "${work_dir}" -f
         do_roundtrip \
             "${name}" \
             "${id}" \
             "${num_threads}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id} --input-ref-file ${ref_file}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id}.mgrec --output-file ${f}.${id} --input-ref-file ${ref_file} -f" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.dec.mgrec -f" \
             "${f}"
-        rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec" "${f}".sorted.sam
+        rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.${id}.dec.mgrec" "${f}"."${id}".sorted.sam
     elif [[ "$tool" == "genie_la" ]]; then
         name="Genie_LA"
         id="genie_la.mgb"
-        "${samtools}" sort -n -o "${f}".sorted.sam -@ "${num_threads}" "${f}"
-        ${genie} transcode-sam --threads "${num_threads}" --input-file "${f}".sorted.sam --output-file "${f}".mgrec --no_ref -w "${work_dir}"
+        "${samtools}" sort -n -o "${f}"."${id}".sorted.sam -@ "${num_threads}" "${f}"
+        ${genie} transcode-sam --threads "${num_threads}" --input-file "${f}"."${id}".sorted.sam --output-file "${f}"."${id}".mgrec --no_ref -w "${work_dir}" -f
         do_roundtrip \
             "${name}" \
             "${id}" \
             "${num_threads}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.mgrec --output-file ${f}.${id}" \
-            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.mgrec" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id}.mgrec --output-file ${f}.${id} -f" \
+            "${genie} run --threads ${num_threads} --input-file ${f}.${id} --output-file ${f}.${id}.dec.mgrec -f" \
             "${f}"
-        rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.mgrec" "${f}".sorted.sam
+        rm "${f}.${id}" "${f}.${id}.mgrec" "${f}.${id}.dec.mgrec" "${f}"."${id}".sorted.sam
     else
         echo "No tool $tool for bam files."
     fi
@@ -411,8 +414,8 @@ function sync_file () {
     DATA_TARGET=tmp/genie_sim_data
     bash -c "[ -d \"/localstorage/${USER}/${DATA_TARGET}\" ] || mkdir -p \"/localstorage/${USER}/${DATA_TARGET}\""
     target_file="/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}"
-    #/usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" rsync -avHAPSx "$file_src" "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}"
-    RSYNC_COMMAND=$(rsync -aEim "$file_src" "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}")
+   # /usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" rsync -avHAPSx "$file_src" "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}"
+    RSYNC_COMMAND=$(/usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" rsync -aEim "$file_src" "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}")
     echo "Downloading: $file_src to $target_file"
     if [[ ${target_file##*.} == "gz" ]]; then
         uncompressed_file=${target_file%.*}

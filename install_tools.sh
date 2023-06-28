@@ -67,6 +67,7 @@ install_deez () {(
     deez_version="92cd56b" # DeeZ does not have a '-v|--version' flag.
     cd deez
     git checkout $deez_version
+    sed -i 's/CFLAGS =/CFLAGS \+=/' Makefile
     make --jobs
     cd ..
     deez="$(pwd)/deez/deez"
@@ -123,6 +124,7 @@ install_mstcom () {(
     # Patch Makefile
     sed -i 's/Wno-used-function/Wno-unused-function/' Makefile
     sed -i 's/\$(CC) \$(CPPFLAGS) \$(LIBS) \$^ -o \$@/\$(CC) \$(CPPFLAGS) \$^ \$(LIBS) -o \$@/' Makefile
+    sed -i 's/CPPFLAGS =/CPPFLAGS \+=/' Makefile
     make --jobs
     cd ..
     mstcom="$(pwd)/mstcom/mstcom"
@@ -144,12 +146,15 @@ install_pgrc () {(
     echo "[${self_name}] PgRC ${pgrc_version}: ${pgrc}"
 )}
 
-
 install_fastore () {(
     set -e
     git clone https://github.com/refresh-bio/FaStore.git
     fastore_version="0.8"
     cd FaStore
+    sed -i 's/-lz/-lz -lrt/g' fastore/fastore_bin/Makefile
+    sed -i 's/-lz/-lz -lrt/g' fastore/fastore_rebin/Makefile
+    sed -i 's/-lz/-lz -lrt/g' fastore/fastore_pack/Makefile
+    sed -i 's/CXX_FLAGS/CXXFLAGS/g' fastore/fastore_bin/Makefile
     make --jobs
     cd ../..
     fastore="$(pwd)/FaStore/scripts/fastore_compress.sh"
@@ -175,7 +180,7 @@ install_tools () {
     install_single "pgrc" &
     install_single "mstcom" &
     wait $(jobs -p)
-    
+
     install_single "dsrc" &
     install_single "genozip" &
     install_single "fastore" &
