@@ -1,0 +1,53 @@
+name: genie
+channels:
+  - anaconda
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - binutils=2.40=hdd6e379_0
+  - binutils_impl_linux-64=2.40=hf600244_0
+  - binutils_linux-64=2.40=hbdbef99_0
+  - bzip2=1.0.8=h7b6447c_0
+  - c-ares=1.19.1=hd590300_0
+  - c-compiler=1.5.2=h0b41bf4_0
+  - ca-certificates=2023.5.7=hbcca054_0
+  - curl=8.1.2=h409715c_0
+  - cxx-compiler=1.5.2=hf52228f_0
+  - gcc=11.4.0=h7baecda_0
+  - gcc_impl_linux-64=11.4.0=h7aa1c59_0
+  - gcc_linux-64=11.4.0=hfd045f2_0
+  - gxx=11.4.0=h7baecda_0
+  - gxx_impl_linux-64=11.4.0=h7aa1c59_0
+  - gxx_linux-64=11.4.0=hfc1ae95_0
+  - kernel-headers_linux-64=2.6.32=he073ed8_15
+  - keyutils=1.6.1=h166bdaf_0
+  - krb5=1.20.1=h81ceb04_0
+  - ld_impl_linux-64=2.40=h41732ed_0
+  - libcurl=8.1.2=h409715c_0
+  - libdeflate=1.18=h0b41bf4_0
+  - libedit=3.1.20191231=he28a2e2_2
+  - libev=4.33=h516909a_1
+  - libgcc-devel_linux-64=11.4.0=h922705a_0
+  - libgcc-ng=13.1.0=he5830b7_0
+  - libgfortran-ng=13.1.0=h69a702a_0
+  - libgfortran5=13.1.0=h15d22d2_0
+  - libgomp=13.1.0=he5830b7_0
+  - libnghttp2=1.52.0=h61bc06f_0
+  - libnsl=2.0.0=h7f98852_0
+  - libsanitizer=11.4.0=h4dcbe23_0
+  - libssh2=1.11.0=h0841786_0
+  - libstdcxx-devel_linux-64=11.4.0=h922705a_0
+  - libstdcxx-ng=13.1.0=hfd8a6a1_0
+  - libzlib=1.2.13=hd590300_5
+  - mpi=1.0=openmpi
+  - ncurses=6.4=hcb278e6_0
+  - openmpi=4.1.5=h414af15_101
+  - openssl=3.1.1=hd590300_1
+  - perl=5.32.1=2_h7f98852_perl5
+  - sysroot_linux-64=2.12=he073ed8_15
+  - xz=5.2.10=h5eee18b_1
+  - zlib=1.2.13=hd590300_5
+  - zstd=1.5.2=h3eb15da_6
+prefix: /home/muenteferi/nobackup/anaconda/envs/genie

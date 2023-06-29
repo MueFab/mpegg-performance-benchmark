@@ -15,7 +15,7 @@ git_root_dir="$(git rev-parse --show-toplevel)"
 num_threads="8"
 test_run=false
 work_dir="/localstorage/${USER}/tmp/genie_sim_data"
-result_dir="${git_root_dir}/tmp"
+result_dir="~/genie_benchmark_results"
 
 mkdir -p "$result_dir"
 mkdir -p "$work_dir"

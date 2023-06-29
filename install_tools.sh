@@ -155,6 +155,11 @@ install_fastore () {(
     sed -i 's/-lz/-lz -lrt/g' fastore/fastore_rebin/Makefile
     sed -i 's/-lz/-lz -lrt/g' fastore/fastore_pack/Makefile
     sed -i 's/CXX_FLAGS/CXXFLAGS/g' fastore/fastore_bin/Makefile
+
+    sed -i "s#\./fastore_bin#${tools_dir}/FaStore/bin/fastore_bin#" scripts/fastore_compress.sh
+    sed -i "s#\./fastore_rebin#${tools_dir}/FaStore/bin/fastore_rebin#" scripts/fastore_compress.sh
+    sed -i "s#\./fastore_pack#${tools_dir}/FaStore/bin/fastore_pack#" scripts/fastore_compress.sh
+    sed -i "s#\./fastore_pack#${tools_dir}/FaStore/bin/fastore_pack#" scripts/fastore_decompress.sh
     make --jobs
     cd ../..
     fastore="$(pwd)/FaStore/scripts/fastore_compress.sh"

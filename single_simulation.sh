@@ -91,7 +91,7 @@ readonly fastore_comp="${tools_dir}/FaStore/scripts/fastore_compress.sh"
 readonly fastore_decomp="${tools_dir}/FaStore/scripts/fastore_decompress.sh"
 readonly time="/usr/bin/time"
 
-
+mkdir -p "$work_dir"
 cd "$work_dir"
 
 
@@ -160,8 +160,6 @@ function do_fastq_paired () {
     elif [[ "$tool" == "fastore" ]]; then
         name="fastore"
         id="fastore"
-        tmp=${PWD}
-        cd "${fastore_dir}"
         do_roundtrip \
             "${name}" \
             "${id}" \
@@ -170,7 +168,6 @@ function do_fastq_paired () {
             "bash ${fastore_decomp} --in ${f}.$id --out ${f}.$id.fastq --pair ${f2}.$id.fastq --threads ${num_threads}" \
             "${f}"
         rm "${f}.${id}.cdata" "${f}.${id}.cmeta" "${f}.${id}.fastq" "${f2}.${id}.fastq"
-        cd "$tmp"
         return 0
     elif [[ "$tool" == "genie_ga" ]]; then
         # Genie
@@ -214,8 +211,6 @@ function do_fastq () {
         if [[ "$tool" == "fastore" ]]; then
             name="fastore"
             id="fastore"
-            tmp=${PWD}
-            cd "${fastore_dir}"
             do_roundtrip \
                 "${name}" \
                 "${id}" \
@@ -224,7 +219,6 @@ function do_fastq () {
                 "bash ${fastore_decomp} --in ${f}.$id --out ${f}.$id.fastq --threads ${num_threads}" \
                 "${f}"
             rm "${f}.${id}.cdata" "${f}.${id}.cmeta" "${f}.${id}.fastq"
-            cd "$tmp"
             return 0
         elif [[ "$tool" == "pgrc" ]]; then
             name="pgrc"
