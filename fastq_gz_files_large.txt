@@ -1,1 +1,0 @@
-/data/gidb/shared/mpeg-content-repository/MPEG-G/Part02-Coding_of_Genomic_Information/Sequencing_Data_Collection/wgs/phi-x-174/PhiX-NovaSeq-UltraHighDepth/Phix1_NoIndex_L001_R1_001.fastq.gz;/data/gidb/shared/mpeg-content-repository/MPEG-G/Part02-Coding_of_Genomic_Information/Sequencing_Data_Collection/wgs/phi-x-174/PhiX-NovaSeq-UltraHighDepth/Phix1_NoIndex_L001_R2_001.fastq.gz

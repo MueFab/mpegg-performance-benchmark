@@ -1,1 +1,8 @@
-fastore
+mstcom;128G
+pgrc;64G
+fastore;64G
+genie_ga;32G
+genie_ll;12G
+dsrc;2G
+pigz;1G
+genozip;4G

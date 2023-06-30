@@ -7,7 +7,7 @@
 #SBATCH --partition=cpu_normal     # Partition auf der gerechnet werden soll. Ohne Angabe des Parameters wird auf der
                                     #   Default-Partition gerechnet. Es können mehrere angegeben werden, mit Komma getrennt.
 #SBATCH --tasks-per-node=8          # Reservierung von 4 CPUs pro Rechenknoten
-#SBATCH --mem=64G                   # Reservierung von 10GB RAM
+#SBATCH --mem=128G                   # Reservierung von 10GB RAM
 
 set -e
 set -o pipefail
@@ -28,8 +28,6 @@ git_root_dir="$(git rev-parse --show-toplevel)"
 # Usage -----------------------------------------------------------------------
 
 num_threads="1"
-test_run=false
-genie_run=false
 work_dir="/localstorage/${USER}/tmp/genie_sim_data"
 result_dir="${git_root_dir}/tmp"
 tool=""
@@ -64,7 +62,7 @@ while [[ "${#}" -gt 0 ]]; do
     shift
 done
 
-host_name=`hostname`
+host_name=$(hostname)
 echo "[${self_name}] host: ${host_name}"
 echo "[${self_name}] number of threads: ${num_threads}"
 echo "[${self_name}] work directory: ${work_dir}"
@@ -86,7 +84,6 @@ readonly mstcom="${tools_dir}/mstcom/mstcom"
 readonly samtools="${tools_dir}/samtools/install/bin/samtools"
 readonly genozip="${tools_dir}/genozip/genozip"
 readonly pgrc="${tools_dir}/PgRC/build/PgRC"
-readonly fastore_dir="${tools_dir}/FaStore/bin"
 readonly fastore_comp="${tools_dir}/FaStore/scripts/fastore_compress.sh"
 readonly fastore_decomp="${tools_dir}/FaStore/scripts/fastore_decompress.sh"
 readonly time="/usr/bin/time"
@@ -109,7 +106,7 @@ function do_roundtrip () {
     echo "$compress_cmd_"
     timed_compress_cmd_="${time} --verbose --output ${input_}.${id_}.time_compress.txt ${compress_cmd_}"
     eval "${timed_compress_cmd_}" || ( echo "[${self_name}] ${name_} compression error (proceeding)" && true )
-    
+
     printf "[%s] %-15s %10s @ %d thread(s)    %s\n" "${self_name}" "decompressing:" "${name_}" "${num_threads_}" "${input_}"
     echo "$decompress_cmd_"
     timed_decompress_cmd_="${time} --verbose --output ${input_}.${id_}.time_decompress.txt ${decompress_cmd_}"
@@ -122,7 +119,6 @@ function do_roundtrip () {
         wc --bytes "${input_}.${id_}" > "${input_}.${id_}.size.txt"
     fi
 
-    in_path=${input_%/*}
     mv "${input_}.${id_}.size.txt" "${result_dir}"
     mv "${input_}.${id_}.time_compress.txt" "${result_dir}"
     mv "${input_}.${id_}.time_decompress.txt" "${result_dir}"
@@ -404,30 +400,62 @@ uncompressed_file=""
 
 function sync_file () {
     file_src=${1}
+    tool=${2}
     echo "F: $file_src"
     DATA_TARGET=tmp/genie_sim_data
     bash -c "[ -d \"/localstorage/${USER}/${DATA_TARGET}\" ] || mkdir -p \"/localstorage/${USER}/${DATA_TARGET}\""
     target_file="/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}"
    # /usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" rsync -avHAPSx "$file_src" "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}"
+
+    mkdir -p "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}.lock"
+    touch "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}.lock/${tool}"
     RSYNC_COMMAND=$(/usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" rsync -aEim "$file_src" "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}")
     echo "Downloading: $file_src to $target_file"
     if [[ ${target_file##*.} == "gz" ]]; then
         uncompressed_file=${target_file%.*}
     elif [[ ${target_file##*.} == "bam" ]]; then
-        uncompressed_file="${target_file%.*}.sam"    
+        uncompressed_file="${target_file%.*}.sam"
     fi
     if [ -n "${RSYNC_COMMAND}" ]; then
         if [[ ${target_file##*.} == "gz" ]]; then
             echo "File changed! decompressing to $uncompressed_file"
-            "${pigz}" --processes ${num_threads} --decompress --stdout "$target_file" > "$uncompressed_file"
+            /usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" "${pigz}" --processes "${num_threads}" --decompress --stdout "$target_file" > "$uncompressed_file"
         elif [[ ${target_file##*.} == "bam" ]]; then
             echo "File changed! decompressing to $uncompressed_file"
-            "${samtools}" view -@ "${num_threads}" -h "$target_file" -o "$uncompressed_file"    
+            /usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" "${samtools}" view -@ "${num_threads}" -h "$target_file" -o "$uncompressed_file"
         fi
     else
         echo "File $target_file already up to date!"
+        /usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" echo "Getting lock..."
+        while [[ ! -f "$uncompressed_file"  ]]; do
+            sleep 10
+            /usr/bin/python /usr/bin/withlock -w 86400 "/localstorage/${USER}/sync.lock" echo "Uncompressed file unavailable yet..."
+        done
     fi
-} 
+}
+
+function clean_file () {
+    file_src=${1}
+    tool=${2}
+    DATA_TARGET=tmp/genie_sim_data
+    target_file="/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}"
+    if [[ ${target_file##*.} == "gz" ]]; then
+        uncompressed_file=${target_file%.*}
+    elif [[ ${target_file##*.} == "bam" ]]; then
+        uncompressed_file="${target_file%.*}.sam"
+    fi
+
+    echo "rm /localstorage/${USER}/${DATA_TARGET}/${file_src##*/}.lock/${tool}"
+    rm /localstorage/${USER}/${DATA_TARGET}/${file_src##*/}.lock/${tool}
+    if [ -z "$(ls -A -- /localstorage/"${USER}"/${DATA_TARGET}/"${file_src##*/}".lock/)" ]; then
+      echo "rm  /localstorage/${USER}/${DATA_TARGET}/${file_src##*/}"
+      rm  /localstorage/${USER}/${DATA_TARGET}/${file_src##*/}
+      echo "rm -r  /localstorage/${USER}/${DATA_TARGET}/${file_src##*/}.lock"
+      rm -r  "/localstorage/${USER}/${DATA_TARGET}/${file_src##*/}.lock"
+      echo "rm $uncompressed_file"
+      rm "$uncompressed_file"
+    fi
+}
 
 if [[ "$tool" == "" ]]; then
     echo "No tool specified"
@@ -439,7 +467,8 @@ if [[ ! -f "$file1" ]]; then
     exit 1
 fi
 
-sync_file "${file1}"
+sync_file "${file1}" "$tool"
+orig_file1=${file1}
 file1="$uncompressed_file"
 
 if [[ "$file2" != "" ]]; then
@@ -447,7 +476,8 @@ if [[ "$file2" != "" ]]; then
         echo "File 2 is invalid"
         exit 1
     fi
-    sync_file "${file2}"
+    sync_file "${file2}" "$tool"
+    orig_file2=${file2}
     file2="$uncompressed_file"
 fi
 
@@ -466,4 +496,10 @@ elif [[ ${file1##*.} == "sam" ]]; then
 else
     echo "Error: Unknown file extensions."
     exit 1
+fi
+
+clean_file "${orig_file1}" "$tool"
+
+if [[ "$file2" != "" ]]; then
+    clean_file "${orig_file2}" "$tool"
 fi

@@ -15,7 +15,7 @@ git_root_dir="$(git rev-parse --show-toplevel)"
 num_threads="8"
 test_run=false
 work_dir="/localstorage/${USER}/tmp/genie_sim_data"
-result_dir="~/genie_benchmark_results"
+result_dir="${HOME}/genie_benchmark_results"
 
 mkdir -p "$result_dir"
 mkdir -p "$work_dir"
@@ -79,16 +79,25 @@ function uncompressed_file_name () {
     else
         ref_file=""
     fi
-    for tool in "${bam_tools[@]}"; do
-	if [[ "$tool" == "" ]]; then
-		break
-	fi
+    for tool_line in "${bam_tools[@]}"; do
+        if [[ "$tool_line" == "" ]]; then
+                break
+        fi
+
+        arrTool=(${tool_line//;/ })
+        tool=${arrTool[0]}
+        memory=${arrTool[1]}
+
         base_name=$(basename ${bam_file})
         echo "********* Start Simulation **********************"
 	uncompressed_file_name "$base_name"
-        echo "Submitted: $tool:$uncompressed_file"
-        sbatch -o "$result_dir/$uncompressed_file.$tool.log" -J "$tool:$uncompressed_file" "${git_root_dir}"/single_simulation.sh -f "${bam_file}" -g "${ref_file}" -t "$tool" -w "$work_dir" -@ "$num_threads" -r "$result_dir"
-        sleep 1
+        if [[ -f "$result_dir/$uncompressed_file.$tool.log" ]]; then
+            echo "Skipped: $result_dir/$uncompressed_file.$tool.log already existing "
+        else
+            echo "Submitted: $tool:$uncompressed_file"
+            sbatch --mem="$memory" -o "$result_dir/$uncompressed_file.$tool.log" -J "$tool:$uncompressed_file" "${git_root_dir}"/single_simulation.sh -f "${bam_file}" -g "${ref_file}" -t "$tool" -w "$work_dir" -@ "$num_threads" -r "$result_dir"
+            sleep 1
+        fi
         echo "********* Finish Simulation **********************"
     done
  done
@@ -100,7 +109,10 @@ function uncompressed_file_name () {
     file=${arrIN[0]}
 
     if [ ${#arrIN[@]} == "1" ]; then
-        for tool in "${fastq_tools[@]}"; do
+        for tool_line in "${fastq_tools[@]}"; do
+            arrTool=(${tool_line//;/ })
+            tool=${arrTool[0]}
+            memory=${arrTool[1]}
 	    if [[ "$tool" == "" ]]; then
                 break
             fi
@@ -108,15 +120,22 @@ function uncompressed_file_name () {
             base_name=$(basename ${file})
             echo "********* Start Simulation **********************"
             uncompressed_file_name "$base_name"
-            echo "Submitted: $tool:$uncompressed_file"
-            sbatch -o "$result_dir/$uncompressed_file.$tool.log" -J "$tool:$uncompressed_file" "${git_root_dir}"/single_simulation.sh -f "${file}" -t "$tool" -w "$work_dir" -@ "$num_threads" -r "$result_dir"
-            sleep 1
+            if [[ -f "$result_dir/$uncompressed_file.$tool.log" ]]; then
+                echo "Skipped: $result_dir/$uncompressed_file.$tool.log already existing "
+            else
+                echo "Submitted: $tool:$uncompressed_file"
+                sbatch --mem="$memory" -o "$result_dir/$uncompressed_file.$tool.log" -J "$tool:$uncompressed_file" "${git_root_dir}"/single_simulation.sh -f "${file}" -t "$tool" -w "$work_dir" -@ "$num_threads" -r "$result_dir"
+                sleep 1
+            fi
             echo "********* Finish Simulation **********************"
         done
     else
         file2=${arrIN[1]}
 
-        for tool in "${fastq_tools[@]}"; do
+        for tool_line in "${fastq_tools[@]}"; do
+            arrTool=(${tool_line//;/ })
+            tool=${arrTool[0]}
+            memory=${arrTool[1]}
 	    if [[ "$tool" == "" ]]; then
                 break
             fi
@@ -124,9 +143,13 @@ function uncompressed_file_name () {
             base_name=$(basename ${file})
             echo "********* Start Simulation **********************"
             uncompressed_file_name "$base_name"
-	    echo "Submitted: $tool:$uncompressed_file"
-            sbatch -o "$result_dir/$uncompressed_file.$tool.log" -J "$tool:$uncompressed_file" "${git_root_dir}"/single_simulation.sh -f "${file}" -g "${file2}" -t "$tool" -w "$work_dir" -@ "$num_threads" -r "$result_dir"
-            sleep 1
+	    if [[ -f "$result_dir/$uncompressed_file.$tool.log" ]]; then
+                echo "Skipped: $result_dir/$uncompressed_file.$tool.log already existing "
+            else
+                echo "Submitted: $tool:$uncompressed_file"
+                sbatch --mem="$memory" -o "$result_dir/$uncompressed_file.$tool.log" -J "$tool:$uncompressed_file" "${git_root_dir}"/single_simulation.sh -f "${file}" -g "${file2}" -t "$tool" -w "$work_dir" -@ "$num_threads" -r "$result_dir"
+                sleep 1
+            fi
             echo "********* Finish Simulation **********************"
         done
     fi
